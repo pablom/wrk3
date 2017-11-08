@@ -22,29 +22,29 @@ endif
 SRC  := wrk.c net.c ssl.c aprintf.c stats.c script.c units.c \
         ae.c zmalloc.c http_parser.c hdr_histogram.c tinymt64.c \
 
-BIN  := wrk
+BIN  := wrk3
 VER  ?= $(shell git describe --tags --always --dirty)
 
-ODIR := obj
-OBJ  := $(patsubst %.c,$(ODIR)/%.o,$(SRC)) $(ODIR)/bytecode.o $(ODIR)/version.o
+OBJDIR := obj
+OBJ  := $(patsubst %.c,$(OBJDIR)/%.o,$(SRC)) $(OBJDIR)/bytecode.o $(OBJDIR)/version.o
 LIBS := -lluajit-5.1 $(LIBS)
 
 DEPS    :=
-CFLAGS  += -I$(ODIR)/include -I$(ODIR)/include/luajit-2.0
-LDFLAGS += -L$(ODIR)/lib
+CFLAGS  += -I$(OBJDIR)/include -I$(OBJDIR)/include/luajit-2.0
+LDFLAGS += -L$(OBJDIR)/lib
 
 ifneq ($(WITH_LUAJIT),)
 	CFLAGS  += -I$(WITH_LUAJIT)/include
 	LDFLAGS += -L$(WITH_LUAJIT)/lib
 else
-	DEPS += $(ODIR)/lib/libluajit-5.1.a
+	DEPS += $(OBJDIR)/lib/libluajit-5.1.a
 endif
 
 ifneq ($(WITH_OPENSSL),)
 	CFLAGS  += -I$(WITH_OPENSSL)/include
 	LDFLAGS += -L$(WITH_OPENSSL)/lib
 else
-	DEPS += $(ODIR)/lib/libssl.a
+	DEPS += $(OBJDIR)/lib/libssl.a
 endif
 
 all: $(BIN)
@@ -56,40 +56,41 @@ $(BIN): $(OBJ)
 	@echo LINK $(BIN)
 	@$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-$(OBJ): config.h Makefile $(DEPS) | $(ODIR)
+$(OBJ): config.h Makefile $(DEPS) | $(OBJDIR)
 
-$(ODIR):
+$(OBJDIR):
 	@mkdir -p $@
 
-$(ODIR)/bytecode.o: src/wrk.lua
+$(OBJDIR)/bytecode.o: src/wrk.lua
 	@echo LUAJIT $<
 	@$(SHELL) -c 'PATH=obj/bin:$(PATH) luajit -b $(CURDIR)/$< $(CURDIR)/$@'
 
-$(ODIR)/version.o:
+$(OBJDIR)/version.o:
 	@echo 'const char *VERSION="$(VER)";' | $(CC) -xc -c -o $@ -
 
-$(ODIR)/%.o : %.c
+$(OBJDIR)/%.o : %.c
 	@echo CC $<
 	@$(CC) $(CFLAGS) -c -o $@ $<
 
-# Dependencies
-
+###########################################################################
+#  Dependencies build section
+###########################################################################
 LUAJIT  := $(notdir $(patsubst %.tar.gz,%,$(wildcard deps/LuaJIT*.tar.gz)))
 OPENSSL := $(notdir $(patsubst %.tar.gz,%,$(wildcard deps/openssl*.tar.gz)))
 
-OPENSSL_OPTS = no-shared no-psk no-srp no-dtls no-idea --prefix=$(abspath $(ODIR))
+OPENSSL_OPTS = no-shared no-psk no-srp no-dtls no-idea --prefix=$(abspath $(OBJDIR))
 
-$(ODIR)/$(LUAJIT):  deps/$(LUAJIT).tar.gz  | $(ODIR)
-	@tar -C $(ODIR) -xf $<
+$(OBJDIR)/$(LUAJIT):  deps/$(LUAJIT).tar.gz  | $(OBJDIR)
+	@tar -C $(OBJDIR) -xf $<
 
-$(ODIR)/$(OPENSSL): deps/$(OPENSSL).tar.gz | $(ODIR)
-	@tar -C $(ODIR) -xf $<
+$(OBJDIR)/$(OPENSSL): deps/$(OPENSSL).tar.gz | $(OBJDIR)
+	@tar -C $(OBJDIR) -xf $<
 
-$(ODIR)/lib/libluajit-5.1.a: $(ODIR)/$(LUAJIT)
+$(OBJDIR)/lib/libluajit-5.1.a: $(OBJDIR)/$(LUAJIT)
 	@echo Building LuaJIT...
-	@$(MAKE) -C $< PREFIX=$(abspath $(ODIR)) BUILDMODE=static install
+	@$(MAKE) -C $< PREFIX=$(abspath $(OBJDIR)) BUILDMODE=static install
 
-$(ODIR)/lib/libssl.a: $(ODIR)/$(OPENSSL)
+$(OBJDIR)/lib/libssl.a: $(OBJDIR)/$(OPENSSL)
 	@echo Building OpenSSL...
 ifeq ($(TARGET), darwin)
 	@$(SHELL) -c "cd $< && ./Configure $(OPENSSL_OPTS) darwin64-x86_64-cc"
@@ -101,10 +102,11 @@ endif
 	@$(MAKE) -C $< install_sw
 	@touch $@
 
-# ------------
+
+.DEFAULT_GOAL := all
 
 .PHONY: all clean
-.PHONY: $(ODIR)/version.o
+.PHONY: $(OBJDIR)/version.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o .lua
