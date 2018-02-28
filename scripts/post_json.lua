@@ -6,6 +6,6 @@ wrk.path = "/v1"
 wrk.body   = '{"id":1,"jsonrpc":"2.0","method":"echo","params":["Hello world"]}'
 wrk.headers["Content-Type"] = "application/json"
 wrk.headers["Accept"] = "*/*"
-wrk.headers["User-Agent"] = "wrk"
+wrk.headers["User-Agent"] = "wrk3"
 
 

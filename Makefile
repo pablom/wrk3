@@ -33,6 +33,9 @@ DEPS    :=
 CFLAGS  += -I$(OBJDIR)/include -I$(OBJDIR)/include/luajit-2.0
 LDFLAGS += -L$(OBJDIR)/lib
 
+OPENSSL_URL=https://github.com/openssl/openssl/archive/OpenSSL_1_1_0g.tar.gz
+LUAJIT_URL=https://luajit.org/download/LuaJIT-2.0.5.tar.gz
+
 ifneq ($(WITH_LUAJIT),)
 	CFLAGS  += -I$(WITH_LUAJIT)/include
 	LDFLAGS += -L$(WITH_LUAJIT)/lib
@@ -51,6 +54,12 @@ all: $(BIN)
 
 clean:
 	$(RM) -rf $(BIN) obj/*
+
+deps:
+	rm -rf deps
+	mkdir -p deps
+	wget -O $(PWD)/deps/openssl-1.1.0g.tar.gz $(OPENSSL_URL)
+	wget -O $(PWD)/deps/LuaJIT-2.0.5.tar.gz $(LUAJIT_GITHUB_URL)
 
 $(BIN): $(OBJ)
 	@echo LINK $(BIN)
