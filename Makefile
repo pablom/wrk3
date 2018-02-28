@@ -59,7 +59,7 @@ deps:
 	rm -rf deps
 	mkdir -p deps
 	wget -O $(PWD)/deps/openssl-1.1.0g.tar.gz $(OPENSSL_URL)
-	wget -O $(PWD)/deps/LuaJIT-2.0.5.tar.gz $(LUAJIT_GITHUB_URL)
+	wget -O $(PWD)/deps/LuaJIT-2.0.5.tar.gz $(LUAJIT_URL)
 
 $(BIN): $(OBJ)
 	@echo LINK $(BIN)
